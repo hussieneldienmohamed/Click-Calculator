@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Traffic Ratio Calculator</title>
+  <style>   عايز اضيف علي نفس الكود ده خانه تحسب max heat disspiation عن طريق انها تاخد قيمه ال max powwer consumption * 3.412 
+    body { font-family: Arial; background: #f8f9fa; padding: 20px; }
+    .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 20px; }
+    .row { display: flex; gap: 20px; flex-wrap: wrap; }
+    label, input, button { display: block; width: 100%; margin-bottom: 15px; }
+    .calculator { flex: 1; min-width: 300px; }
+    button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; }
+    .result { margin-top: 20px; padding: 15px; border-radius: 5px; background: #e9ecef; }
+    .high-performance { color: #007bff; font-weight: bold; }
+    .very-good-performance { color: #006400; font-weight: bold; }
+    .good-performance { color: #90ee90; font-weight: bold; }
+    .acceptable-performance { color: darkorange; font-weight: bold; }
+    .bad-performance { color: red; font-weight: bold; }
+    .logo { max-width: 180px; display: block; margin-bottom: 20px; }
+    .recalculate-btn { background-color: #28a745; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <img src="clicko.png" alt="Company Logo" class="logo">
+  <div class="container">
+    <div class="row">
+      <div class="calculator">
+        <h2>Traffic Ratio Calculator</h2>
+
+        <label>Number of 48-Port Switches:</label>
+        <input type="number" id="switches48" />
+
+        <label>Number of 24-Port Switches:</label>
+        <input type="number" id="switches24" />
+
+        <label>Number of Uplinks:</label>
+        <input type="number" id="uplinks" />
+
+        <label>Uplink Speed (Gbps):</label>
+        <input type="number" id="uplinkSpeed" />
+
+        <button onclick="calculateRatio()">Calculate</button>
+        <div class="result" id="result"></div>
+      </div>
+
+      <div class="calculator">
+        <h2>Switching Capacity Calculator</h2>
+
+        <label>No. Downlink Ports:</label>
+        <input type="number" id="downlinkPorts" />
+
+        <label>Downlink Speed (Gbps):</label>
+        <input type="number" id="downlinkSpeed" />
+
+        <label>No. Uplinks:</label>
+        <input type="number" id="uplinks2" />
+
+        <label>Uplink Speed (Gbps):</label>
+        <input type="number" id="uplinkSpeed2" />
+
+        <button onclick="calculateSwitchingCapacity()">Calculate Switching Capacity</button>
+        <div class="result" id="capacityResult"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="calculator">
+        <h2>Max Power Consumption</h2>
+
+        <label>POE power supply:</label>
+        <input type="number" id="poePower" />
+
+        <label>Power of switch:</label>
+        <input type="number" id="switchPower" />
+
+        <button onclick="calculatePower()">Calculate Max Power</button>
+        <div class="result" id="powerResult"></div>
+        <div class="result" id="heatResult"></div>
+        <button class="recalculate-btn" onclick="resetPowerCalculator()">Reset Power & Heat Calculation</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function calculateRatio() {
+      const switches48 = parseFloat(document.getElementById('switches48').value) || 0;
+      const switches24 = parseFloat(document.getElementById('switches24').value) || 0;
+      const uplinks = parseFloat(document.getElementById('uplinks').value);
+      const uplinkSpeed = parseFloat(document.getElementById('uplinkSpeed').value);
+
+      if (isNaN(uplinks) || isNaN(uplinkSpeed) || uplinks * uplinkSpeed === 0) {
+        document.getElementById('result').innerHTML = 'Please enter valid numbers (uplinks and speed must be > 0).';
+        return;
+      }
+
+      const totalAccess = (switches48 * 48 + switches24 * 24);
+      const totalUplink = uplinks * uplinkSpeed;
+      const ratioValue = totalAccess / totalUplink;
+      const ratioText = ratioValue.toFixed(1) + ':1';
+
+      let performance = '';
+      let performanceClass = '';
+      if (ratioValue <= 5) {
+        performance = 'High Performance';
+        performanceClass = 'high-performance';
+      } else if (ratioValue <= 8) {
+        performance = 'Very Good Performance';
+        performanceClass = 'very-good-performance';
+      } else if (ratioValue <= 11) {
+        performance = 'Good Performance';
+        performanceClass = 'good-performance';
+      } else if (ratioValue <= 15) {
+        performance = 'Acceptable / Risky';
+        performanceClass = 'acceptable-performance';
+      } else {
+        performance = 'Bottleneck / Bad Design';
+        performanceClass = 'bad-performance';
+      }
+
+      const resultHTML = `
+        <strong>Traffic Ratio:</strong> ${ratioText}<br>
+        <strong>Assessment:</strong> <span class="${performanceClass}">${performance}</span><br>
+        <button class="recalculate-btn" onclick="resetRatioCalculator()">Calculate New Traffic Ratio</button>
+      `;
+      document.getElementById('result').innerHTML = resultHTML;
+    }
+
+    function resetRatioCalculator() {
+      document.getElementById('switches48').value = '';
+      document.getElementById('switches24').value = '';
+      document.getElementById('uplinks').value = '';
+      document.getElementById('uplinkSpeed').value = '';
+      document.getElementById('result').innerHTML = '';
+    }
+
+    function calculateSwitchingCapacity() {
+      const downlinkPorts = parseFloat(document.getElementById('downlinkPorts').value) || 0;
+      const downlinkSpeed = parseFloat(document.getElementById('downlinkSpeed').value) || 0;
+      const uplinks2 = parseFloat(document.getElementById('uplinks2').value) || 0;
+      const uplinkSpeed2 = parseFloat(document.getElementById('uplinkSpeed2').value) || 0;
+
+      const capacity = (downlinkPorts * downlinkSpeed + uplinks2 * uplinkSpeed2) * 2;
+      document.getElementById('capacityResult').innerHTML = '<strong>Switching Capacity:</strong> ' + capacity + ' Gbps';
+    }
+
+    function calculatePower() {
+      const poePower = parseFloat(document.getElementById('poePower').value) || 0;
+      const switchPower = parseFloat(document.getElementById('switchPower').value) || 0;
+
+      const result = (poePower * (2 / 3)) + switchPower;
+      const heatDissipation = result * 3.412;
+
+      document.getElementById('powerResult').innerHTML = '<strong>Max Power Consumption:</strong> ' + result.toFixed(2) + ' W';
+      document.getElementById('heatResult').innerHTML = '<strong>Heat Dissipation:</strong> ' + heatDissipation.toFixed(2) + ' BTU/hr';
+    }
+
+    function resetPowerCalculator() {
+      document.getElementById('poePower').value = '';
+      document.getElementById('switchPower').value = '';
+      document.getElementById('powerResult').innerHTML = '';
+      document.getElementById('heatResult').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
